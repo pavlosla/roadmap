@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background -->
+  <rect width="32" height="32" rx="6" fill="#1e3a5f"/>
+  <!-- Subtle timeline lines -->
+  <line x1="5" y1="22" x2="27" y2="22" stroke="#3b82f6" stroke-width="1" stroke-opacity="0.4"/>
+  <line x1="5" y1="18" x2="27" y2="18" stroke="#3b82f6" stroke-width="1" stroke-opacity="0.25"/>
+  <!-- Milestone bars -->
+  <rect x="5" y="19.5" width="9" height="5" rx="1.5" fill="#3b82f6"/>
+  <rect x="16" y="19.5" width="11" height="5" rx="1.5" fill="#22c55e"/>
+  <!-- EA text -->
+  <text x="16" y="15" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="white" text-anchor="middle" letter-spacing="0.5">EA</text>
+</svg>

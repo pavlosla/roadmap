@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Architect Roadmap</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Controls -->
+        <header class="top-controls">
+            <div class="left-controls" style="display: flex; align-items: center; gap: 32px;">
+                <div class="year-selector">
+                    <button id="prev-year" class="icon-btn" aria-label="Previous Year">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <h1 id="current-year-display">2025</h1>
+                    <button id="next-year" class="icon-btn" aria-label="Next Year">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+                
+                <div class="client-selector" style="display: flex; gap: 8px; align-items: center;">
+                    <select id="client-select" class="secondary-btn" style="min-width: 150px; padding: 6px 12px; height: 36px;"></select>
+                    <button id="btn-add-client" class="icon-btn" title="Add New Client" style="height: 36px; width: 36px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 6px;">+</button>
+                    <button id="btn-edit-client" class="icon-btn" title="Rename Client" style="height: 36px; width: 36px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 6px;">✎</button>
+                </div>
+            </div>
+            
+            <div class="right-controls" style="display: flex; align-items: center; gap: 32px;">
+                <div class="actions">
+                    <button id="btn-toggle-theme" class="icon-btn" aria-label="Toggle Theme" title="Toggle Dark Mode">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                    <button id="btn-toggle-legend" class="secondary-btn" title="Toggle Legend" style="padding: 6px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="4" height="4" rx="1"/><rect x="3" y="10" width="4" height="4" rx="1"/><rect x="3" y="17" width="4" height="4" rx="1"/><line x1="10" y1="5" x2="21" y2="5"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="19" x2="21" y2="19"/></svg>
+                        Legend
+                    </button>
+                    <button id="btn-edit-legend" class="icon-btn" title="Edit Legend" style="height: 36px; width: 36px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <div class="dropdown" id="export-dropdown">
+                        <button id="btn-export-menu" class="secondary-btn">Export ▼</button>
+                        <div class="dropdown-content">
+                            <button id="btn-export-csv">Export as CSV</button>
+                            <button id="btn-export-json">Export as JSON</button>
+                        </div>
+                    </div>
+                    <button id="btn-import" class="secondary-btn">Import Data</button>
+                    <button id="btn-add-milestone" class="primary-btn">+ Add Milestone</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Timeline Wrapper -->
+        <div class="timeline-wrapper">
+            <!-- Timeline Header (Quarters, Months, Weeks) -->
+            <div class="timeline-header" id="timeline-header">
+                <!-- Injected via JS -->
+            </div>
+            
+            <!-- Swimlane Grid Component -->
+            <div class="swimlane-container" id="swimlane-container">
+                <div class="grid-background" id="grid-background">
+                    <!-- Grid columns injected via JS -->
+                </div>
+                <!-- Cell highlight on hover -->
+                <div class="cell-highlight" id="cell-highlight"></div>
+                <!-- Current Week Indicator Line -->
+                <div class="current-week-indicator" id="current-week-indicator"></div>
+                <!-- Milestones will be injected here -->
+                <div class="milestones-layer" id="milestones-layer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="milestone-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Add Milestone</h2>
+                <button class="close-modal-btn" aria-label="Close">&times;</button>
+            </div>
+            <form id="milestone-form">
+                <input type="hidden" id="milestone-id">
+                <input type="hidden" id="milestone-year">
+                
+                <div class="form-group">
+                    <label for="milestone-name">Name *</label>
+                    <input type="text" id="milestone-name" required placeholder="e.g., Current State Assessment">
+                </div>
+                
+                <div class="form-group row">
+                    <div class="col">
+                        <label for="milestone-type">Activity Type *</label>
+                        <select id="milestone-type" required>
+                            <!-- Injected via JS -->
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label for="milestone-status">Status *</label>
+                        <select id="milestone-status" required>
+                            <option value="planned">Planned</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col">
+                        <label for="milestone-start">Start Week (1-52) *</label>
+                        <input type="number" id="milestone-start" min="1" max="52" required>
+                    </div>
+                    <div class="col">
+                        <label for="milestone-duration">Duration (Weeks) *</label>
+                        <input type="number" id="milestone-duration" min="1" max="52" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="milestone-desc">Description</label>
+                    <textarea id="milestone-desc" rows="3" placeholder="Additional details..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="btn-delete-milestone" class="danger-btn hidden">Delete</button>
+                    <div class="right-actions">
+                        <button type="button" class="cancel-modal-btn secondary-btn">Cancel</button>
+                        <button type="submit" class="primary-btn">Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="import-file" accept=".json" style="display: none;">
+
+    <!-- Tooltip Element -->
+    <div class="milestone-tooltip" id="milestone-tooltip">
+        <!-- Injected via JS -->
+    </div>
+
+    <!-- Edit Legend Modal -->
+    <div class="modal-overlay" id="edit-legend-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Edit Legend Categories</h2>
+                <button class="close-legend-modal-btn close-modal-btn" aria-label="Close">&times;</button>
+            </div>
+            <div class="legend-edit-body" style="padding: 24px; max-height: 60vh; overflow-y: auto;">
+                <div id="legend-edit-list" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Injected via JS -->
+                </div>
+                <button type="button" id="btn-add-legend-entry" class="secondary-btn" style="margin-top: 16px; width: 100%;">+ Add Category</button>
+            </div>
+            <div class="form-actions" style="padding: 16px 24px; border-top: 1px solid var(--border-color);">
+                <div class="right-actions">
+                    <button type="button" class="cancel-legend-modal-btn secondary-btn">Cancel</button>
+                    <button type="button" id="btn-save-legend" class="primary-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend Element -->
+    <div class="legend-container" id="legend-container">
+        <div class="legend-title">
+            Activity Types
+            <span class="legend-close" id="btn-close-legend">&times;</span>
+        </div>
+        <div id="legend-items">
+            <!-- Injected via JS -->
+        </div>
+    </div>
+
+    <!-- Legend Element -->
+    <script src="js/utils.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/timeline.js"></script>
+    <script src="js/drag.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
