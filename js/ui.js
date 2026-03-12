@@ -123,6 +123,11 @@ const UI = {
             localStorage.setItem('ea_roadmap_legend_hidden', 'true');
         });
 
+        // Phases Toggle
+        document.getElementById('btn-toggle-phases').addEventListener('click', () => {
+            State.setPhasesVisible(!State.phasesVisible);
+        });
+
         // Client Controls
         document.getElementById('client-select').addEventListener('change', (e) => {
             State.setClient(e.target.value);

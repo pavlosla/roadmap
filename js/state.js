@@ -6,6 +6,17 @@ const STORAGE_KEY = 'ea_roadmap_data';
 const CLIENTS_STORAGE_KEY = 'ea_roadmap_clients';
 const ACTIVE_CLIENT_KEY = 'ea_roadmap_active_client';
 const ACTIVITY_TYPES_KEY = 'ea_roadmap_activity_types';
+const PHASES_STORAGE_KEY = 'ea_roadmap_phases';
+const PHASES_VISIBLE_KEY = 'ea_roadmap_phases_visible';
+
+const defaultPhases = [
+    { id: 'discover', name: 'Discover', startWeek: 1,  endWeek: 4,  color: '#6366f1' },
+    { id: 'prepare',  name: 'Prepare',  startWeek: 5,  endWeek: 10, color: '#0ea5e9' },
+    { id: 'explore',  name: 'Explore',  startWeek: 11, endWeek: 18, color: '#14b8a6' },
+    { id: 'realize',  name: 'Realize',  startWeek: 19, endWeek: 35, color: '#f97316' },
+    { id: 'deploy',   name: 'Deploy',   startWeek: 36, endWeek: 46, color: '#ec4899' },
+    { id: 'run',      name: 'Run',      startWeek: 47, endWeek: 52, color: '#22c55e' }
+];
 
 const defaultActivityTypes = [
     { id: Utils.generateId(), name: 'Discovery', color: '#3b82f6' },
@@ -78,6 +89,8 @@ class AppState {
         this.activeClientId = 'default';
         this.activityTypes = [...defaultActivityTypes];
         this.milestones = [];
+        this.phases = defaultPhases.map(p => ({ ...p }));
+        this.phasesVisible = true;
         this.listeners = [];
         
         this.loadData();
@@ -116,6 +129,18 @@ class AppState {
             } catch(e) { console.error(e); }
         }
 
+        // Load Phases
+        const storedPhases = localStorage.getItem(PHASES_STORAGE_KEY);
+        if (storedPhases) {
+            try {
+                this.phases = JSON.parse(storedPhases);
+            } catch(e) { console.error(e); }
+        }
+        const storedPhasesVisible = localStorage.getItem(PHASES_VISIBLE_KEY);
+        if (storedPhasesVisible !== null) {
+            this.phasesVisible = storedPhasesVisible === 'true';
+        }
+
         // Load Milestones
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -138,6 +163,21 @@ class AppState {
         localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(this.clients));
         localStorage.setItem(ACTIVE_CLIENT_KEY, this.activeClientId);
         localStorage.setItem(ACTIVITY_TYPES_KEY, JSON.stringify(this.activityTypes));
+        localStorage.setItem(PHASES_STORAGE_KEY, JSON.stringify(this.phases));
+        localStorage.setItem(PHASES_VISIBLE_KEY, this.phasesVisible);
+    }
+
+    // Phase Operations
+    setPhases(phases) {
+        this.phases = phases;
+        this.saveData();
+        this.notify();
+    }
+
+    setPhasesVisible(visible) {
+        this.phasesVisible = visible;
+        localStorage.setItem(PHASES_VISIBLE_KEY, visible);
+        this.notify();
     }
 
     // Get milestones for current year

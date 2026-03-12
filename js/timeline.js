@@ -14,10 +14,14 @@ const Timeline = {
     init() {
         this.renderHeaders();
         this.renderGrid();
+        this.renderPhases();
+        this.renderPhaseSwimlaneLines();
         
         // Ensure to re-render when state changes
         State.subscribe(() => {
             this.renderMilestones();
+            this.renderPhases();
+            this.renderPhaseSwimlaneLines();
             this.updateCurrentWeekIndicator();
             this.updateCurrentYearDisplay();
         });
@@ -53,24 +57,41 @@ const Timeline = {
         });
         headerContainer.appendChild(monthsRow);
 
-        // Weeks Row - 52 columns
+        // Weeks Row - 52 columns with Calendar Week labels
         const weeksRow = document.createElement('div');
         weeksRow.className = 'header-row weeks';
         for (let i = 1; i <= 52; i++) {
             const el = document.createElement('div');
             el.className = 'header-cell';
-            // Determine W1, W2, W3, W4 or W5
-            const weekInMonth = ((i - 1) % 4) + 1; 
-            el.textContent = `W${weekInMonth}`;
-            el.title = `Week ${i}`;
+            el.textContent = `CW${i}`;
+            el.title = `Calendar Week ${i}`;
             weeksRow.appendChild(el);
         }
         headerContainer.appendChild(weeksRow);
     },
 
     renderGrid() {
-        // We just need 52 background grid lines.
-        // Handled completely by CSS linear-gradient now!
+        // Grid lines handled by CSS linear-gradient
+    },
+
+    renderPhaseSwimlaneLines() {
+        const swimlane = document.getElementById('swimlane-container');
+        // Remove old phase lines
+        swimlane.querySelectorAll('.phase-swimlane-line').forEach(el => el.remove());
+
+        if (!State.phasesVisible) return;
+
+        State.phases.forEach((phase, index) => {
+            // Draw left border for every phase (skip index 0 — it's the left edge)
+            if (index > 0) {
+                const line = document.createElement('div');
+                line.className = 'phase-swimlane-line';
+                const leftPct = ((phase.startWeek - 1) / 52) * 100;
+                line.style.left = `${leftPct}%`;
+                line.style.borderColor = phase.color;
+                swimlane.appendChild(line);
+            }
+        });
     },
 
     updateCurrentWeekIndicator() {
@@ -187,6 +208,132 @@ const Timeline = {
 
             // Events attached in Drag/App
             layer.appendChild(el);
+        });
+    },
+
+    // --- Phases Overlay ---
+
+    renderPhases() {
+        const container = document.getElementById('phases-layer');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        // Respect visibility toggle
+        if (!State.phasesVisible) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'flex';
+
+        State.phases.forEach((phase, index) => {
+            const startPct = ((phase.startWeek - 1) / 52) * 100;
+            const endPct = (phase.endWeek / 52) * 100;
+            const widthPct = endPct - startPct;
+
+            const block = document.createElement('div');
+            block.className = 'phase-block';
+            block.dataset.index = index;
+            block.style.left = `${startPct}%`;
+            block.style.width = `${widthPct}%`;
+            block.style.backgroundColor = phase.color + '22'; // ~13% opacity hex
+            block.style.borderColor = phase.color;
+
+            // Label (double-click to rename)
+            const label = document.createElement('span');
+            label.className = 'phase-label';
+            label.textContent = phase.name;
+            label.style.color = phase.color;
+            label.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                this.startRenamePhase(label, index);
+            });
+            block.appendChild(label);
+
+            // Right resize handle (last phase has no resizable right edge)
+            if (index < State.phases.length - 1) {
+                const handle = document.createElement('div');
+                handle.className = 'phase-resize-handle';
+                handle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    this.startPhaseResize(e, index);
+                });
+                block.appendChild(handle);
+            }
+
+            container.appendChild(block);
+        });
+    },
+
+    startRenamePhase(labelEl, index) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = State.phases[index].name;
+        input.className = 'phase-rename-input';
+        labelEl.replaceWith(input);
+        input.focus();
+        input.select();
+
+        const commit = () => {
+            const newName = input.value.trim();
+            if (newName) {
+                const phases = State.phases.map((p, i) =>
+                    i === index ? { ...p, name: newName } : p
+                );
+                State.setPhases(phases);
+            } else {
+                this.renderPhases(); // cancel — restore
+            }
+        };
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') commit();
+            if (e.key === 'Escape') this.renderPhases();
+        });
+        input.addEventListener('blur', commit);
+    },
+
+    startPhaseResize(e, index) {
+        const container = document.getElementById('phases-layer');
+        const containerRect = container.getBoundingClientRect();
+        const containerWidth = containerRect.width;
+        const phases = State.phases.map(p => ({ ...p })); // deep copy
+
+        const onMouseMove = (moveEvent) => {
+            const mouseX = moveEvent.clientX - containerRect.left;
+            let newWeek = Math.round((mouseX / containerWidth) * 52);
+            // Clamp: current phase must be at least 1 week, next phase must be at least 1 week
+            const minWeek = phases[index].startWeek + 1;
+            const maxWeek = phases[index + 1].endWeek - 1;
+            newWeek = Math.max(minWeek, Math.min(newWeek, maxWeek));
+
+            phases[index].endWeek = newWeek;
+            phases[index + 1].startWeek = newWeek + 1;
+
+            // Live update DOM without saving
+            this._applyPhasesPreview(phases);
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            State.setPhases(phases); // persist
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    },
+
+    _applyPhasesPreview(phases) {
+        const container = document.getElementById('phases-layer');
+        const blocks = container.querySelectorAll('.phase-block');
+        phases.forEach((phase, i) => {
+            if (blocks[i]) {
+                const startPct = ((phase.startWeek - 1) / 52) * 100;
+                const endPct   = (phase.endWeek / 52) * 100;
+                blocks[i].style.left  = `${startPct}%`;
+                blocks[i].style.width = `${endPct - startPct}%`;
+            }
         });
     }
 };
